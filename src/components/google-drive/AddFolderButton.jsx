@@ -4,8 +4,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFolderPlus } from "@fortawesome/free-solid-svg-icons";
 import { database } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
+import Folder from "./Folder";
+import { ROOT_FOLDER } from "../../hooks/useFolder";
 
-export default function AddFolderButton(currentFolder) {
+export default function AddFolderButton({ currentFolder }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const { currentUser } = useAuth();
@@ -21,13 +23,20 @@ export default function AddFolderButton(currentFolder) {
   function handleSubmit(e) {
     e.preventDefault();
 
-    if (currentFolder === null) return;
+    if (currentFolder == null) return;
+
+    const path = [...currentFolder.path];
+
+    if (currentFolder !== ROOT_FOLDER) {
+      path.push({ name: currentFolder.name, id: currentFolder.id });
+    }
+
     // create a folder in the database (firebase)
     database.folders.add({
       name: name,
-      parentId: currentFolder.uid,
+      parentId: currentFolder.id,
       userId: currentUser.uid,
-      // path:
+      path: path,
       createAt: database.getCurrentTimestamp(),
     });
     setName("");
@@ -46,7 +55,7 @@ export default function AddFolderButton(currentFolder) {
               <Form.Label> Folder Name</Form.Label>
               <Form.Control
                 type="text"
-                require
+                required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
